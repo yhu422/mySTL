@@ -3,4 +3,4 @@ project(mySTL)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(mySTL test_my_vector.cpp)
+add_executable(mySTL test_my_string.cpp)
