@@ -5,43 +5,66 @@
 #ifndef MYSTL_MY_SHARED_PTR_H
 #define MYSTL_MY_SHARED_PTR_H
 #include <atomic>
-
-template <class T>
-struct SpControlBlock{
-    T *m_data;
-    std::atomic<int> m_refcnt;
-
-    void incref(){
-        m_refcnt.fetch_add(1, std::memory_order_relaxed);
+#include <memory>
+template <class T, class Deleter =std::default_delete<T>>
+struct DataBlock{
+    T* m_data;
+    std::atomic<long> m_refcnt;
+    Deleter m_delete;
+    DataBlock() : m_data(nullptr), m_refcnt(1){}
+    DataBlock(T* ptr) : m_data(ptr), m_refcnt(1){}
+    DataBlock(T* ptr, Deleter d) : m_data(ptr), m_refcnt(1), m_delete(d){}
+    void inc_ref(){
+        m_refcnt.fetch_add(1);
     }
-
-    void decref(){
-        if(m_refcnt.fetch_sub(1, std::memory_order_relaxed) == 1){
+    void dec_ref(){
+        if(m_refcnt.fetch_sub(1) == 1){
             delete this;
         }
     }
 
-    long cntref() const noexcept{
-        return m_refcnt.load(std::memory_order_relaxed);
+    long get_ref(){
+        return m_refcnt.load();
     }
 
-    explicit SpControlBlock(T *ptr) : m_refcnt(1), m_data(ptr){}
-    SpControlBlock(SpControlBlock &&)=delete;
-    ~SpControlBlock(){
-        delete m_data;
+    ~DataBlock(){
+        m_delete(m_data);
     }
 };
 template<class T>
 struct my_shared_ptr{
-    SpControlBlock<T> *m_cb;
+    T* m_ptr;
+    DataBlock<T> *m_cb;
     explicit my_shared_ptr(std::nullptr_t = nullptr) noexcept : m_cb(nullptr){};
 
-    template<class Deleter>
-    explicit my_shared_ptr(T *ptr) : m_cb(new SpControlBlock<T>(ptr)){};
+    template<class Y> requires(std::is_convertible_v<Y*, T*>)
+    explicit my_shared_ptr(Y* ptr) :m_ptr(ptr), m_cb(new DataBlock<T>(ptr)){};
 
-    my_shared_ptr(my_shared_ptr const &that){
+    template<class Y, class Deleter> requires(std::is_convertible_v<Y*, T*>)
+    explicit my_shared_ptr(Y* ptr, Deleter d) : m_ptr(ptr), m_cb(new DataBlock<T, Deleter>(ptr, std::move(d))){};
+
+    my_shared_ptr( const my_shared_ptr& that ) noexcept{
+        m_ptr = that.m_ptr;
         m_cb = that.m_cb;
-        m_cb->incref();
+        if(m_cb) {
+            m_cb->inc_ref();
+        }
+    }
+
+    my_shared_ptr(my_shared_ptr&& that) noexcept{
+        m_ptr = that.m_ptr;
+        m_cb = that.m_cb;
+        that.m_cb = nullptr;
+        that.m_ptr = nullptr;
+    }
+
+    my_shared_ptr& operator=(const my_shared_ptr& that){
+        m_ptr = that.m_ptr;
+        m_cb = that.m_cb;
+        if(m_cb){
+            m_cb->inc_ref();
+        }
+        return *this;
     }
 
     T* get(){
