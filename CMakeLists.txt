@@ -7,4 +7,5 @@ project(mySTL VERSION 1.0)
 set(mySTL_VERSION 1.0)
 
 add_subdirectory(test)
+add_subdirectory(benchmark)
 enable_testing()

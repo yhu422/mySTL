@@ -1,23 +1,21 @@
 //
 // Created by Yile Hu on 9/29/24.
 //
-#include "../src/Vector.h"
+#include "../include/Vector.h"
 #include <benchmark/benchmark.h>
 
 static void BM_VectorPushBack(benchmark::State& state) {
-    my_vector<char> v(1000000, 'a');
+    mystl::Vector<int> v;
     for (auto _ : state)
-        my_vector<char> v2 = v;
+        v.push_back(1);
 }
+
 // Register the function as a benchmark
 BENCHMARK(BM_VectorPushBack);
-
-// Define another benchmark
-static void BM_StringCopy(benchmark::State& state) {
-    std::string x = "hello";
+static void BM_STLVectorPushBack(benchmark::State& state) {
+    std::vector<int> v;
     for (auto _ : state)
-        std::string copy(x);
+        v.push_back(1);
 }
-BENCHMARK(BM_StringCopy);
-
+BENCHMARK(BM_STLVectorPushBack);
 BENCHMARK_MAIN();

@@ -7,8 +7,8 @@
 #include <fcntl.h>
 #include <cassert>
 #include <algorithm>
-#include "../src/String.h"
-#include "../src/Vector.h"
+#include "../include/String.h"
+#include "../include/Vector.h"
 #include <gtest/gtest.h>
 
 TEST(StringTest, Size) {

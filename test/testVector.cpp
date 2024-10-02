@@ -1,8 +1,4 @@
-#include <iostream>
-#include "../src/Vector.h"
-#include <vector>
-#include <fcntl.h>
-#include <cassert>
+#include "../include/Vector.h"
 #include <algorithm>
 #include <gtest/gtest.h>
 
