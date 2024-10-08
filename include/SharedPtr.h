@@ -80,8 +80,14 @@ namespace mystl {
 
         ~SharedPtr() { if(m_cb) m_cb->dec_ref(); }
     };
-
-
-
+    template< class T, class... Args > requires(!std::is_array_v<T>)
+    SharedPtr<T> make_shared(Args &&... args) {
+        return SharedPtr<T>(new T(std::forward<Args>(args)...));
+    }
+    template< class T >
+    SharedPtr<std::remove_all_extents_t<T>> make_shared( std::size_t N ){
+        using elem_type = std::remove_all_extents_t<T>;
+        return SharedPtr<elem_type>(new elem_type[N]);
+    }
 }
 #endif //MYSTL_MY_SHARED_PTR_H
